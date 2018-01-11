@@ -33,11 +33,12 @@ def multiprocess(processes, iters):
 def main():
     M = 100
     N = 3200000
+    nProcesses=20
     C = np.zeros((M,N), dtype=np.float32)
     start = time.time()
     # for i in range(M):
         # print "Calling VectorAddDriver() for the {}th time".format(i)
-    results = multiprocess(4, range(M))
+    results = multiprocess(nProcesses, range(M))
     # C = VectorAddDriver()
     # if not np.mod(i,10):
     #     print "C[i,:5] = " + str(C[i,:5])
