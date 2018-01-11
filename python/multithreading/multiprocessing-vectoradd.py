@@ -23,11 +23,13 @@ def VectorAddDriver():
     return C
 
 def multiprocess(processes, iters):
+    N=3200000
+    C=np.zeros((len(iters),N),dtype=np.float32)
     pool = mp.Pool(processes=processes)
     results = [pool.apply_async(VectorAddDriver, args=()) for i in iters]
-    results = [p.get() for p in results]
-    # results.sort() # to sort the results by input window width
-    return results
+    for (i,p) in enumerate(results):
+        C[i,:]=p.get()
+    return C
     
 
 def main():
@@ -36,16 +38,7 @@ def main():
     nProcesses=20
     C = np.zeros((M,N), dtype=np.float32)
     start = time.time()
-    # for i in range(M):
-        # print "Calling VectorAddDriver() for the {}th time".format(i)
     results = multiprocess(nProcesses, range(M))
-    # C = VectorAddDriver()
-    # if not np.mod(i,10):
-    #     print "C[i,:5] = " + str(C[i,:5])
-    #     print "C[i,-5:] = " + str(C[i,-5:])
-
-    # print "C[:5,:5] = " + str(C[i,:5])
-    # print "C[-5:,-5:] = " + str(C[i,-5:])
     print "multiprocess results: ", results            
     vector_add_time = time.time() - start
     print "VectorAdd took for % seconds" % vector_add_time
