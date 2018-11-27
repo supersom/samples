@@ -3,7 +3,7 @@ import pickle
 from urllib.request import urlopen, urlretrieve
 import pytest
 import numpy as np
-import sys
+import sys,os
 from argparse import ArgumentParser
 
 sys.path.append('/home/som/code/python_video_stab/')
@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument('--input-vid-name',type=str, default='video_orig.avi',
                         help="input vid name")
     parser.add_argument('--live',action='store_true', help="stabilize the camera input?")
+    parser.add_argument('--scale',action='store_true', help="stabilize sRT or just RT?")
     parser.add_argument('--stab-vid-name',type=str, default=None,
                         help="out vid name")
 
@@ -76,7 +77,7 @@ remote_vid = 'https://s3.amazonaws.com/python-vidstab/ostrich.mp4'
 # urlretrieve(remote_trunc_vid, local_trunc_vid)
 # urlretrieve(remote_vid, local_vid)
 
-stabilizer = VidStab(kp_method='ORB',stab_algo=args.stab_algo)
+stabilizer = VidStab(kp_method='ORB',stab_algo=args.stab_algo,scale=args.scale)
 print("stab_algo:",stabilizer.stab_algo)
 stabilizer.stabilize(input_path=local_vid, output_path=stab_local_vid,smoothing_window=args.smoothing_window,playback=True,border_type='replicate',max_frames=args.max_frames)
 
@@ -85,11 +86,24 @@ from stabFuncts import *
 # ITF
 ITF_crop_flag = False
 if args.live:
-	print("ITF of input video", getITF(stab_local_vid[:-4]+'_input.avi',crop=ITF_crop_flag))
-else:
-	print("ITF of input video", getITF(local_vid,crop=ITF_crop_flag))
+	local_vid = stab_local_vid[:-4]+'_input.avi'
+
+print("ITF of input video", getITF(local_vid,crop=ITF_crop_flag))
 
 print("ITF of stabilized video", getITF(stab_local_vid,crop=ITF_crop_flag))
+
+os.system("python Movie2Frame.py --in-file-name {} --max-frames 10 --write-gray".format(local_vid.split('/')[-1]))
+frame_filename=local_vid[:-4]+'/frame8_'+local_vid[:-4].split('/')[-1]+'.jpg'
+print("filename of frame of input video:",frame_filename)
+ref_img = cv2.imread(frame_filename)
+avg_input_filename=stab_local_vid[:-4]+'_averaged_input.png'
+print("filename of avg input image:",avg_input_filename)
+avg_input_img=cv2.imread(avg_input_filename)
+avg_stab_filename=stab_local_vid[:-4]+'_averaged.png'
+print("filename of average stabilized image:",avg_stab_filename)
+avg_stab_img=cv2.imread(avg_stab_filename)
+print("PSNR of avg input video vs. frame 0:",getPSNR(ref_img,avg_input_img))
+print("PSNR of avg stabilized video vs. frame 0:",getPSNR(ref_img,avg_stab_img))
 
 stabilizer.plot_trajectory()
 plt.show()

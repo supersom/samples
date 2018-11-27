@@ -16,6 +16,7 @@ def get_args():
                         help="formatted string for out image file")
 
     parser.add_argument('--max-frames',type=float, default=float('inf'),help="max number of frames to process, even if the video has more frames")
+    parser.add_argument('--write-gray',action='store_true', help="write color video as gray images?")
 
     # parser.add_argument('--show',action='store_true', help="show images/noise removed images")
     # parser.add_argument('--median',action='store_true', help="median filtering flag")
@@ -39,13 +40,16 @@ if args.out_file_formatted_string == None:
 
 args.out_file_formatted_string = out_dir_name+'/'+args.out_file_formatted_string
 
-print(cv2.__version__)
+print('Video file name: ',args.dir_name+args.in_file_name)
 vidcap = cv2.VideoCapture(args.dir_name+args.in_file_name)
 success,image = vidcap.read()
 count = 0
 success = True
 while success and count<args.max_frames:
+  if args.write_gray:
+    image=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
   cv2.imwrite(args.out_file_formatted_string % count, image)     # save frame as JPEG file
+  print("Wrote a frame to: ",args.out_file_formatted_string % count)
   success,image = vidcap.read()
   print('Read a new frame: ', success)
   count += 1
